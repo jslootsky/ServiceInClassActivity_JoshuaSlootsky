@@ -33,9 +33,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun onServiceDisconnected(name: ComponentName?) {
             isConnected = false
-
         }
-
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,7 +59,6 @@ class MainActivity : AppCompatActivity() {
             if(isConnected) timerBinder.stop()
             displayTextView.text = "0"
         }
-
 
     }
 
