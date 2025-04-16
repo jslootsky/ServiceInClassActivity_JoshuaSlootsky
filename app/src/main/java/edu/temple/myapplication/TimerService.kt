@@ -87,16 +87,17 @@ class TimerService : Service() {
         override fun run() {
             isRunning = true
             try {
-                for (i in startValue downTo 1)  {
+                for (i in startValue downTo 1) {
                     Log.d("Countdown", i.toString())
-
                     timerHandler?.sendEmptyMessage(i)
 
-                    while (paused);
+                    while (paused); // Busy wait if paused
                     sleep(1000)
-
                 }
+
                 isRunning = false
+                paused = false
+                timerHandler?.sendEmptyMessage(startValue)
             } catch (e: InterruptedException) {
                 Log.d("Timer interrupted", e.toString())
                 isRunning = false

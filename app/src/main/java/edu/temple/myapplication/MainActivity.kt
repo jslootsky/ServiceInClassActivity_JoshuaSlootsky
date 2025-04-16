@@ -27,8 +27,14 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var timerTextView : TextView
 
-    val timerHandler = Handler(Looper.getMainLooper()){
+    val timerHandler = Handler(Looper.getMainLooper()) {
         timerTextView.text = it.what.toString()
+
+        if (it.what == 1) {
+            startValue = START_VALUE
+            timerTextView.text = START_VALUE.toString()
+        }
+
         true
     }
 
@@ -103,9 +109,10 @@ class MainActivity : AppCompatActivity() {
     private fun stopTimer() {
         timerBinder?.stop()
         val editor = sharedPref.edit()
-        val timerValue = R.id.textView.toString()
+        val timerValue = timerTextView.text.toString()
         editor.putString(TIMER_VALUE, timerValue)
         Log.d("timer service", "Timer value being written to preference: $timerValue")
         editor.apply()
     }
+
 }
