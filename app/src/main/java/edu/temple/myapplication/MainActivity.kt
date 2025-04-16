@@ -8,39 +8,40 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.view.View
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var displayTextView: TextView
+    var timerBinder : TimerService.TimerBinder? = null
 
-    var isConnected = false
-    lateinit var timerBinder: TimerService.TimerBinder
+    lateinit var timerTextView : TextView
 
     val timerHandler = Handler(Looper.getMainLooper()){
-        displayTextView.text = it.what.toString()
+        timerTextView.text = it.what.toString()
         true
     }
 
-    private val serviceConnection = object : ServiceConnection{
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            timerBinder = service as TimerService.TimerBinder
-            timerBinder.setHandler(timerHandler)
-            isConnected = true
+    val serviceConnection = object : ServiceConnection{
+        override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
+            timerBinder = (p1 as TimerService.TimerBinder).apply {
+                setHandler(timerHandler)
+            }
         }
 
-        override fun onServiceDisconnected(name: ComponentName?) {
-            isConnected = false
+        override fun onServiceDisconnected(p0: ComponentName?) {
+            timerBinder = null
         }
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        displayTextView = findViewById(R.id.textView)
+        timerTextView = findViewById(R.id.textView)
 
         bindService(
             Intent(this, TimerService::class.java),
@@ -49,21 +50,41 @@ class MainActivity : AppCompatActivity() {
         )
 
         findViewById<Button>(R.id.startButton).setOnClickListener {
-            if(isConnected && !timerBinder.isRunning)
-                timerBinder.start(10)
-            else if(isConnected && timerBinder.isRunning)
-                timerBinder.pause()
-        }
-        
-        findViewById<Button>(R.id.stopButton).setOnClickListener {
-            if(isConnected) timerBinder.stop()
-            displayTextView.text = "0"
+            startOrPauseTimer()
         }
 
+        findViewById<Button>(R.id.stopButton).setOnClickListener {
+            stopTimer()
+        }
     }
 
-    override fun onDestroy() {
-        unbindService(serviceConnection)
-        super.onDestroy()
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_start -> {startOrPauseTimer()}
+            R.id.action_stop -> {stopTimer()}
+
+            else -> return false
+        }
+        return true
+    }
+
+    private fun startOrPauseTimer() {
+        timerBinder?.run {
+            if (!isRunning && !paused) {
+                start(30)
+            }
+            else {
+                pause()
+            }
+        }
+    }
+
+    private fun stopTimer() {
+        timerBinder?.stop()
     }
 }
