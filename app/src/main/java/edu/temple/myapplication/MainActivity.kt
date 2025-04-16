@@ -3,17 +3,25 @@ package edu.temple.myapplication
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
 
+const val TIMER_VALUE = "TIMER VALUE"
+
 class MainActivity : AppCompatActivity() {
+
+    lateinit var sharedPref: SharedPreferences
+
+    val START_VALUE = 30
 
     var timerBinder : TimerService.TimerBinder? = null
 
@@ -37,11 +45,19 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    var startValue = START_VALUE
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        sharedPref = getSharedPreferences("MyPref", MODE_PRIVATE)
+
         timerTextView = findViewById(R.id.textView)
+
+        val savedValue = sharedPref.getString(TIMER_VALUE, START_VALUE.toString())!!.toInt()
+        timerTextView.text = savedValue.toString()
+        startValue = savedValue
 
         bindService(
             Intent(this, TimerService::class.java),
@@ -76,7 +92,7 @@ class MainActivity : AppCompatActivity() {
     private fun startOrPauseTimer() {
         timerBinder?.run {
             if (!isRunning && !paused) {
-                start(30)
+                start(startValue)
             }
             else {
                 pause()
@@ -86,5 +102,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopTimer() {
         timerBinder?.stop()
+        val editor = sharedPref.edit()
+        val timerValue = R.id.textView.toString()
+        editor.putString(TIMER_VALUE, timerValue)
+        Log.d("timer service", "Timer value being written to preference: $timerValue")
+        editor.apply()
     }
 }
